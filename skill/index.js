@@ -82,16 +82,15 @@ var AWS = require("aws-sdk");
 var iotdata = new AWS.IotData({
     endpoint: 'a29s9eowxgq16k.iot.us-east-1.amazonaws.com'.toLowerCase()
 });
-
+/**
+ * updateIoTDevice
+ */
 function udpateIoTDevice(state,callback) {
-
         var params = {
             thingName: 'lamp',
-         //   topic: '$aws/things/myThing/shadow/update',
-            /* required */
-            payload: '{"state" : {"desired":null, "reported" : { "lamp" : "' + state + '" }}}'
-        //    qos: 0
+            payload: '{ "state" : { "desired" : null, "reported" : { "lamp" : "' + state + '" }}}'
         };
+        // updateThingShadow function in iotdata
         iotdata.updateThingShadow(params, function(err, data) {
             if (err) { // an error occurred
                 log('DEBUG', err);
@@ -107,7 +106,7 @@ function udpateIoTDevice(state,callback) {
         });
     
 }
-function log(title, msg) {
+function log(level, msg) {
     console.log('[' + title + ']   -   ' + msg);
 }
 function response(_header, name, payload){
