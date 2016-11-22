@@ -1,8 +1,9 @@
 var awsIot = require('aws-iot-device-sdk');
 var dateFormat = require('dateformat');
+var format = "yyyy-mm-dd h:MM:ss";
+var wpi = require('wiring-pi');
 
-var myThingName = 'myThing';
-
+var thingName = 'lamp';
 var thingShadows = awsIot.thingShadow({
    keyPath: '/home/pi/iot/deviceSDK/certs/fb8c7b6aac-private.pem.key',
   certPath: '/home/pi/iot/deviceSDK/certs/fb8c7b6aac-certificate.pem.crt',
@@ -11,29 +12,33 @@ var thingShadows = awsIot.thingShadow({
     region: 'us-east-1'
 });
 
-var wpi = require('wiring-pi');
 wpi.setup('wpi');
 wpi.pinMode(25, wpi.OUTPUT);
 
 thingShadows.on('connect', function() {
-  console.log(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss") + " Connected...");
-  thingShadows.register( myThingName );
-  console.log(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss") + " Registering for state updates on " + myThingName);
 
-  thingShadows.on('foreignStateChange', function(thingName, operation, stateObject){
-	console.log(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss") + ' Message received on device: ' + thingName );
-	console.log(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss") + ' Alexa skill has changed reported state to '
-		+ JSON.stringify(stateObject.state.reported));
-	if(stateObject.state.reported.lamp === 'on'){
-		wpi.digitalWrite(25, 1);
-	} else if ( stateObject.state.reported.lamp === 'off'){
-		wpi.digitalWrite(25, 0);
-	}
+  log('Connected...');
+  // register for updates
+  thingShadows.register( thingName );
+  log('Registering for state updates on [' + thingName + ']');
 
+  // register for foreignStateChange event
+  thingShadows.on('foreignStateChange', function(thing, operation, stateObject){
+	  log('Message received on device: ' + thing );
+	  log('Alexa skill has changed reported state to ' + JSON.stringify(stateObject.state.reported));
+   
+    if(stateObject.state.reported.lamp === 'on'){ 
+      wpi.digitalWrite(25, 1); // write high voltage to pin 25
+    } else if ( stateObject.state.reported.lamp === 'off'){
+      wpi.digitalWrite(25, 0); // write low voltage to ping 25
+    }
   });
 
+  /**
+   * Boiler plate handlers for all other event types
+   */
   thingShadows.on('message', function(topic, payload){
-	console.log('message', topic, payload);
+	  console.log('message', topic, payload);
   });
 
   // Code below just logs messages for info/debugging
@@ -78,3 +83,8 @@ thingShadows.on('connect', function() {
     });
 
 });
+
+function log(msg) {
+  var now = dateFormat(new Date(), "yyyy-mm-dd h:MM:ss");
+  console.log('[' + now + '] ' + msg);
+}

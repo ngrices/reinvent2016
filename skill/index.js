@@ -1,5 +1,4 @@
 exports.handler = function(request, context) {
-    log('DEBUG', JSON.stringify(request));
     switch (request.header.namespace) {
         case 'Alexa.ConnectedHome.Discovery':
             handleDiscovery(request, context);
@@ -63,12 +62,12 @@ function handleControl(request, context) {
     }
     switch(request.header.name){
         case 'TurnOnRequest':
-            postMQTTMessage('on', function(response_name) {
+            udpateIoTDevice('on', function(response_name) {
                 return context.succeed(response(request.header, response_name, {})); 
             });
             break;   
         case 'TurnOffRequest':
-             postMQTTMessage('off', function(response_name) {
+             udpateIoTDevice('off', function(response_name) {
                 return context.succeed(response(request.header, response_name, {})); 
             });
             break;  
@@ -84,16 +83,10 @@ var iotdata = new AWS.IotData({
     endpoint: 'a29s9eowxgq16k.iot.us-east-1.amazonaws.com'.toLowerCase()
 });
 
-/**
- * Post an MQTT Message on a hard coded channel
- * MQTT channel : alexa/demo/color
- * 
- * callback : function(speechoutput)
- */
-function postMQTTMessage(state,callback) {
+function udpateIoTDevice(state,callback) {
 
         var params = {
-            thingName: 'myThing',
+            thingName: 'lamp',
          //   topic: '$aws/things/myThing/shadow/update',
             /* required */
             payload: '{"state" : {"desired":null, "reported" : { "lamp" : "' + state + '" }}}'
@@ -104,7 +97,7 @@ function postMQTTMessage(state,callback) {
                 log('DEBUG', err);
                 callback('DriverInternalError');
             } else { // successful response
-                log('INFO', "Post to MQTT Success !");
+                log('INFO', "Updating thing state on " + thingName + "!");
                 log('INFO', JSON.stringify(data));
                 if(state === 'on')
                     callback('TurnOnConfirmation');
@@ -114,7 +107,6 @@ function postMQTTMessage(state,callback) {
         });
     
 }
-
 function log(title, msg) {
     console.log('[' + title + ']   -   ' + msg);
 }
