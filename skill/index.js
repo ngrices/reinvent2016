@@ -62,12 +62,12 @@ function handleControl(request, context) {
     }
     switch(request.header.name){
         case 'TurnOnRequest':
-            udpateIoTDevice('on', function(response_name) {
+            updateIoTDevice('on', function(response_name) {
                 return context.succeed(response(request.header, response_name, {})); 
             });
             break;   
         case 'TurnOffRequest':
-             udpateIoTDevice('off', function(response_name) {
+             updateIoTDevice('off', function(response_name) {
                 return context.succeed(response(request.header, response_name, {})); 
             });
             break;  
@@ -85,7 +85,7 @@ var iotdata = new AWS.IotData({
 /**
  * updateIoTDevice
  */
-function udpateIoTDevice(state,callback) {
+function updateIoTDevice(state,callback) {
         var params = {
             thingName: 'lamp',
             payload: '{ "state" : { "desired" : null, "reported" : { "lamp" : "' + state + '" }}}'
